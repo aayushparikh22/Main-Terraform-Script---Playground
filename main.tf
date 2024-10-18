@@ -1,47 +1,22 @@
 provider "aws" {
-  region = "us-east-1"  # Replace with your desired region
+  region = "us-east-1"  # Update with your desired region
 }
 
-# Create Security Group with all traffic allowed
-resource "aws_security_group" "allow_all" {
-  name        = "allow_all_traffic_${random_id.id.hex}"  # Make it unique
-  description = "Security group that allows all inbound and outbound traffic"
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+data "aws_security_group" "allow_all" {
+  # Use the existing security group ID
+  id = "sg-0c9a4317cad342b92"
 }
 
-# Generate a random ID to append to the security group name
-resource "random_id" "id" {
-  byte_length = 4
-}
-
-
-# Create an EC2 instance (free tier eligible)
 resource "aws_instance" "free_tier_instance" {
-  ami = "ami-0dba2cb6798deb6d8"  # Ubuntu 20.04 LTS (us-east-1)
-  instance_type = "t2.micro"
+  ami                    = "ami-0dba2cb6798deb6d8"  # Ubuntu 20.04 LTS
+  instance_type         = "t2.micro"
+  vpc_security_group_ids = [data.aws_security_group.allow_all.id]  # Use data source here
 
-  # Attach the security group
-  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  key_name              = "mypermakpus"  # Replace with your key pair name
 
   tags = {
     Name = "My-Playground"
   }
-
-  # Key pair for SSH (optional)
-  key_name = "mypermakpus"  # Replace with your key pair if needed
 }
 
 # Output instance details to a notepad file
@@ -55,7 +30,7 @@ Instance Type: ${aws_instance.free_tier_instance.instance_type}
 Public IP: ${aws_instance.free_tier_instance.public_ip}
 Private IP: ${aws_instance.free_tier_instance.private_ip}
 Key Pair: ${aws_instance.free_tier_instance.key_name}
-Security Group: ${aws_security_group.allow_all.name}
+Security Group: ${data.aws_security_group.allow_all.name}
 
 
 AWS CLI Commands:
